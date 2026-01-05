@@ -387,8 +387,9 @@
           checkoutUrl = `${baseUrl}/checkout/p/${checkoutId}`;
         }
 
-        // Always add embedded mode parameter
-        checkoutUrl += "?embedded=true";
+        // Always add embedded mode parameter and initiativeContext
+        const currentHost = window.location.host;
+        checkoutUrl += `?initiativeContext=${encodeURIComponent(currentHost)}`;
 
         // Update the iframe src
         const iframe = document.getElementById("checkout-iframe");
