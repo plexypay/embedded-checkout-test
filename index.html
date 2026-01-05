@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -189,7 +189,12 @@
     <div class="split-container">
       <div class="iframe-panel">
         <h2 style="margin-top: 0">Checkout iframe</h2>
-        <iframe id="checkout-iframe" src="about:blank" allow="payment; camera; microphone; encrypted-media"></iframe>
+        <iframe
+          id="checkout-iframe"
+          src="about:blank"
+          allow="payment; camera; microphone; encrypted-media"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
       </div>
 
       <div class="config-panel">
@@ -198,12 +203,18 @@
         <div class="info">
           <strong>Instructions:</strong>
           <ol>
-            <li>Select checkout type and enter your payment link ID or session token</li>
+            <li>
+              Select checkout type and enter your payment link ID or session
+              token
+            </li>
             <li>Click "Load Checkout" to load the iframe</li>
-            <li>Complete the checkout flow and watch the message log for results</li>
+            <li>
+              Complete the checkout flow and watch the message log for results
+            </li>
           </ol>
           <p style="margin-top: 10px; margin-bottom: 0">
-            <strong>Note:</strong> Embedded mode is always enabled. The checkout will send postMessage events instead of navigating.
+            <strong>Note:</strong> Embedded mode is always enabled. The checkout
+            will send postMessage events instead of navigating.
           </p>
         </div>
 
@@ -246,7 +257,8 @@
         </form>
 
         <div class="status" id="status-box">
-          <strong>Status:</strong> Listening for postMessage events from iframe...
+          <strong>Status:</strong> Listening for postMessage events from
+          iframe...
         </div>
 
         <div
@@ -260,7 +272,9 @@
 
         <div class="button-group">
           <button onclick="clearLog()">Clear Log</button>
-          <button onclick="testPostMessage()">Send Test Message to Iframe</button>
+          <button onclick="testPostMessage()">
+            Send Test Message to Iframe
+          </button>
           <button onclick="clearVerification()">Clear Verification</button>
         </div>
       </div>
@@ -305,7 +319,7 @@
       function showVerification(isEmbedded, backUrl) {
         const verificationBox = document.getElementById("verification-status");
         const verificationDetails = document.getElementById(
-          "verification-details",
+          "verification-details"
         );
 
         verificationBox.style.display = "block";
@@ -327,7 +341,11 @@
         };
         iframe.contentWindow.postMessage(testMessage, "*");
         logMessage(
-          `<strong>Sent test message to iframe:</strong>\n${JSON.stringify(testMessage, null, 2)}`,
+          `<strong>Sent test message to iframe:</strong>\n${JSON.stringify(
+            testMessage,
+            null,
+            2
+          )}`
         );
       }
 
@@ -386,7 +404,7 @@
 
         // Log the action
         logMessage(
-          `<strong>🔄 Loading checkout:</strong>\n<strong>Type:</strong> ${checkoutType}\n<strong>URL:</strong> ${checkoutUrl}\n<strong>Embedded Mode:</strong> Enabled ✅`,
+          `<strong>🔄 Loading checkout:</strong>\n<strong>Type:</strong> ${checkoutType}\n<strong>URL:</strong> ${checkoutUrl}\n<strong>Embedded Mode:</strong> Enabled ✅`
         );
         console.log("[Test Page] Loading checkout:", checkoutUrl);
       }
@@ -423,11 +441,15 @@ ${JSON.stringify(event.data, null, 2)}
 <strong>Origin:</strong> ${event.origin}
 <strong>Data type:</strong> ${typeof event.data}
 <strong>Data:</strong>
-${typeof event.data === "object" ? JSON.stringify(event.data, null, 2) : event.data}
+${
+  typeof event.data === "object"
+    ? JSON.stringify(event.data, null, 2)
+    : event.data
+}
                 `);
           }
         },
-        false,
+        false
       );
 
       // Log when iframe loads
