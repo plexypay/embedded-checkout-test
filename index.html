@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Embedded Checkout Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .split-container {
+        display: flex;
+        flex: 1;
+        gap: 10px;
+        padding: 10px;
+        min-height: 0;
+      }
+      .iframe-panel {
+        flex: 0 0 60%;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+      }
+      .config-panel {
+        flex: 0 0 calc(40% - 10px);
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+      }
+      .log-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 10px;
+        max-height: 300px;
+        display: flex;
+        flex-direction: column;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        margin-top: 0;
+      }
+      #message-log {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        flex: 1;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        min-height: 0;
+      }
+      .log-entry {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-left: 3px solid #4caf50;
+        background: rgba(76, 175, 80, 0.1);
+      }
+      .log-entry.error {
+        border-left-color: #f44336;
+        background: rgba(244, 67, 54, 0.1);
+      }
+      .timestamp {
+        color: #888;
+        font-size: 12px;
+      }
+      iframe {
+        width: 100%;
+        flex: 1;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        min-height: 0;
+      }
+      .status {
+        padding: 10px;
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        margin-bottom: 15px;
+        border-radius: 4px;
+      }
+      .status.success {
+        background: #e8f5e9;
+        border-left-color: #4caf50;
+      }
+      .status.warning {
+        background: #fff3e0;
+        border-left-color: #ff9800;
+      }
+      .button-group {
+        margin-top: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        background: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background: #1976d2;
+      }
+      .info {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+      }
+      input[type="text"],
+      input[type="url"],
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="url"]:focus,
+      select:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+      .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+      #current-url {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+        margin-top: 10px;
+      }
+      code {
+        background: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #d63384;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="split-container">
+      <div class="iframe-panel">
+        <h2 style="margin-top: 0">Checkout iframe</h2>
+        <iframe id="checkout-iframe" src="about:blank"></iframe>
+      </div>
+
+      <div class="config-panel">
+        <h1>Embedded Checkout Test</h1>
+
+        <div class="info">
+          <strong>Instructions:</strong>
+          <ol>
+            <li>Select checkout type and enter your payment link ID or session token</li>
+            <li>Click "Load Checkout" to load the iframe</li>
+            <li>Complete the checkout flow and watch the message log for results</li>
+          </ol>
+          <p style="margin-top: 10px; margin-bottom: 0">
+            <strong>Note:</strong> Embedded mode is always enabled. The checkout will send postMessage events instead of navigating.
+          </p>
+        </div>
+
+        <h2>Checkout Configuration</h2>
+        <form id="checkout-form" onsubmit="loadCheckout(event)">
+          <div class="form-group">
+            <label for="checkout-type">Checkout Type</label>
+            <select id="checkout-type" onchange="updatePlaceholder()">
+              <option value="payment-link">Payment Link (pl.)</option>
+              <option value="session">Session (p.)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="base-url">Base URL</label>
+            <input
+              type="url"
+              id="base-url"
+              value="https://checkout.plexypay.com/"
+              placeholder="https://checkout.plexypay.com/"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="checkout-id">Payment Link ID / Session Token</label>
+            <input
+              type="text"
+              id="checkout-id"
+              placeholder="Enter payment link ID (e.g., pl_019b4ef1d7a871d7b509a997559c5fd9)"
+              required
+            />
+            <div class="help-text" id="help-text">
+              Enter the payment link ID for payment link checkout (e.g., pl_...)
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button type="submit">Load Checkout</button>
+            <div id="current-url"></div>
+          </div>
+        </form>
+
+        <div class="status" id="status-box">
+          <strong>Status:</strong> Listening for postMessage events from iframe...
+        </div>
+
+        <div
+          id="verification-status"
+          style="display: none"
+          class="status success"
+        >
+          <strong>✅ Embedded Mode Verification:</strong>
+          <div id="verification-details"></div>
+        </div>
+
+        <div class="button-group">
+          <button onclick="clearLog()">Clear Log</button>
+          <button onclick="testPostMessage()">Send Test Message to Iframe</button>
+          <button onclick="clearVerification()">Clear Verification</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-container">
+      <h2 style="margin-top: 0">Message Log</h2>
+      <div id="message-log">Waiting for messages...</div>
+    </div>
+
+    <script>
+      const messageLog = document.getElementById("message-log");
+      let messageCount = 0;
+
+      function logMessage(message, isError = false) {
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = document.createElement("div");
+        entry.className = `log-entry${isError ? " error" : ""}`;
+        entry.innerHTML = `
+                <div class="timestamp">[${timestamp}] Message #${++messageCount}</div>
+                <div>${message}</div>
+            `;
+
+        if (messageLog.textContent === "Waiting for messages...") {
+          messageLog.textContent = "";
+        }
+
+        messageLog.appendChild(entry);
+        messageLog.scrollTop = messageLog.scrollHeight;
+      }
+
+      function clearLog() {
+        messageLog.textContent = "Waiting for messages...";
+        messageCount = 0;
+      }
+
+      function clearVerification() {
+        document.getElementById("verification-status").style.display = "none";
+        document.getElementById("verification-details").innerHTML = "";
+      }
+
+      function showVerification(isEmbedded, backUrl) {
+        const verificationBox = document.getElementById("verification-status");
+        const verificationDetails = document.getElementById(
+          "verification-details",
+        );
+
+        verificationBox.style.display = "block";
+        verificationDetails.innerHTML = `
+                <div style="margin-top: 8px;">
+                    ✅ <strong>postMessage received successfully</strong><br>
+                    ✅ <strong>Embedded mode is active</strong> - Navigation was prevented, iframe stayed on checkout page<br>
+                    <strong>Target URL:</strong> ${backUrl}
+                </div>
+            `;
+      }
+
+      function testPostMessage() {
+        const iframe = document.getElementById("checkout-iframe");
+        const testMessage = {
+          type: "TEST_MESSAGE",
+          action: "test",
+          timestamp: new Date().toISOString(),
+        };
+        iframe.contentWindow.postMessage(testMessage, "*");
+        logMessage(
+          `<strong>Sent test message to iframe:</strong>\n${JSON.stringify(testMessage, null, 2)}`,
+        );
+      }
+
+      function updatePlaceholder() {
+        const checkoutType = document.getElementById("checkout-type").value;
+        const checkoutIdInput = document.getElementById("checkout-id");
+        const helpText = document.getElementById("help-text");
+
+        if (checkoutType === "payment-link") {
+          checkoutIdInput.placeholder =
+            "Enter payment link ID (e.g., pl_019b4ef1d7a871d7b509a997559c5fd9)";
+          helpText.textContent =
+            "Enter the payment link ID for payment link checkout (e.g., pl_...)";
+        } else {
+          checkoutIdInput.placeholder =
+            "Enter session token (e.g., eyJhbGc...)";
+          helpText.textContent =
+            "Enter the full JWT session token for session-based checkout";
+        }
+      }
+
+      function loadCheckout(event) {
+        event.preventDefault();
+
+        const checkoutType = document.getElementById("checkout-type").value;
+        const checkoutId = document.getElementById("checkout-id").value.trim();
+        const baseUrl = document.getElementById("base-url").value.trim();
+
+        if (!checkoutId) {
+          alert("Please enter a payment link ID or session token");
+          return;
+        }
+
+        // Build the URL based on checkout type
+        let checkoutUrl;
+        if (checkoutType === "payment-link") {
+          checkoutUrl = `${baseUrl}/checkout/pl/${checkoutId}`;
+        } else {
+          checkoutUrl = `${baseUrl}/checkout/p/${checkoutId}`;
+        }
+
+        // Always add embedded mode parameter
+        checkoutUrl += "?embedded=true";
+
+        // Update the iframe src
+        const iframe = document.getElementById("checkout-iframe");
+        iframe.src = checkoutUrl;
+
+        // Display the current URL
+        const currentUrlDiv = document.getElementById("current-url");
+        currentUrlDiv.innerHTML = `
+                <strong>Current URL:</strong> ${checkoutUrl}<br>
+                <strong>Embedded Mode:</strong> ✅ Enabled (always)<br>
+                <strong>Expected Behavior:</strong> ✅ Navigation will be prevented, postMessage events will be sent
+            `;
+
+        // Log the action
+        logMessage(
+          `<strong>🔄 Loading checkout:</strong>\n<strong>Type:</strong> ${checkoutType}\n<strong>URL:</strong> ${checkoutUrl}\n<strong>Embedded Mode:</strong> Enabled ✅`,
+        );
+        console.log("[Test Page] Loading checkout:", checkoutUrl);
+      }
+
+      // Listen for postMessage events
+      window.addEventListener(
+        "message",
+        function (event) {
+          console.log("[Test Page] Received postMessage event:", event);
+          console.log("[Test Page] Event origin:", event.origin);
+          console.log("[Test Page] Event data:", event.data);
+
+          // Check if this is the BACK_TO_STORE message
+          if (event.data && event.data.type === "BACK_TO_STORE") {
+            // Show verification status
+            showVerification(true, event.data.url);
+
+            logMessage(`
+<strong>✅ BACK_TO_STORE message received!</strong>
+<strong>Type:</strong> ${event.data.type}
+<strong>Action:</strong> ${event.data.action}
+<strong>URL:</strong> ${event.data.url}
+<strong>Timestamp:</strong> ${event.data.timestamp}
+<strong>Origin:</strong> ${event.origin}
+<strong>Expected Behavior:</strong> Navigation prevented (embedded mode enabled)
+
+<strong>Full message object:</strong>
+${JSON.stringify(event.data, null, 2)}
+                `);
+          } else {
+            // Log any other messages received
+            logMessage(`
+<strong>📨 Other message received:</strong>
+<strong>Origin:</strong> ${event.origin}
+<strong>Data type:</strong> ${typeof event.data}
+<strong>Data:</strong>
+${typeof event.data === "object" ? JSON.stringify(event.data, null, 2) : event.data}
+                `);
+          }
+        },
+        false,
+      );
+
+      // Log when iframe loads
+      document
+        .getElementById("checkout-iframe")
+        .addEventListener("load", function () {
+          logMessage("<strong>🔄 Iframe loaded successfully</strong>");
+          console.log("[Test Page] Iframe loaded");
+        });
+
+      console.log("[Test Page] Test page initialized");
+      console.log("[Test Page] Listening for postMessage events on window");
+    </script>
+  </body>
+</html>
